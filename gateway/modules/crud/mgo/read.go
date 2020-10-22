@@ -144,6 +144,11 @@ func (m *Mongo) Read(ctx context.Context, col string, req *model.ReadRequest) (i
 			if len(req.Aggregate) > 0 {
 				getNestedObject(doc)
 			}
+
+			if req.PostProcess != nil {
+				_ = m.auth.PostProcessMethod(ctx, req.PostProcess[col], doc)
+			}
+
 			results = append(results, doc)
 		}
 
@@ -174,6 +179,10 @@ func (m *Mongo) Read(ctx context.Context, col string, req *model.ReadRequest) (i
 		err := collection.FindOne(ctx, req.Find, findOneOptions).Decode(&res)
 		if err != nil {
 			return 0, nil, err
+		}
+
+		if req.PostProcess != nil {
+			_ = m.auth.PostProcessMethod(ctx, req.PostProcess[col], res)
 		}
 
 		return 1, res, nil
